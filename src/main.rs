@@ -67,7 +67,7 @@ fn generate_field() -> RawField {
 }
 
 fn solve_field(field: RawField) -> SolvedField {
-    let mut newfield: Vec<Vec<FieldType>> = Vec::new();
+    let mut newfield: SolvedField = Vec::new();
     for y in 0..HEIGHT {
         let mut row: Vec<FieldType> = Vec::new();
         for x in 0..WIDTH {
@@ -106,6 +106,6 @@ mod test {
     use super::*;
 
     #[test]
-    fn generate_field() {
+    fn solve_field() {
     }
 }
