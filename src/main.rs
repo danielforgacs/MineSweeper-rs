@@ -12,6 +12,8 @@
 ☐1221
 */
 
+use rand::prelude::*;
+
 type RawField = Vec<Vec<usize>>;
 type SolvedField = Vec<Vec<FieldType>>;
 
@@ -33,8 +35,8 @@ enum FieldType {
 impl std::fmt::Display for FieldType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            FieldType::Empty => f.write_str(".")?,
-            FieldType::Mine => f.write_str("b")?,
+            FieldType::Empty => f.write_str("\u{20dd}")?,
+            FieldType::Mine => f.write_str("\u{229b}")?,
             FieldType::Touching(x) => f.write_str(&format!("{}", x))?,
         }
         Ok(())
@@ -66,18 +68,12 @@ fn main() {
 }
 
 fn generate_field() -> RawField {
-    // vec![
-    //     vec![0, 0, 0, 0, 0, 0, 0],
-    //     vec![0, 0, 1, 0, 0, 0, 0],
-    //     vec![0, 0, 0, 0, 0, 0, 0],
-    //     vec![0, 0, 1, 1, 0, 0, 0],
-    //     vec![0, 0, 0, 0, 0, 0, 0],
-    // ]
+    let mut rng = rand::thread_rng();
     let mut field: RawField = Vec::new();
     for _ in 0..HEIGHT {
         let mut row = Vec::new();
         for _ in 0..WIDTH {
-            if rand::random() {
+            if rng.gen::<f32>() > 0.9_f32 {
                 row.push(1);
             } else {
                 row.push(0);
