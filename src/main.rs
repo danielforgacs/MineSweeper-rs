@@ -18,6 +18,7 @@ type SolvedField = [[FieldType; WIDTH]; HEIGHT];
 
 const WIDTH: usize = 6;
 const HEIGHT: usize = 4;
+const MINE_PROBABILITY: f32 = 0.9;
 const NEIGHBOURS: [(i32, i32); 9] = [
     (-1, -1), (0, -1), (1, -1),
     (-1,  0), (0,  0), (1,  0),
@@ -43,7 +44,7 @@ impl std::fmt::Display for FieldType {
 }
 
 fn main() {
-    let field = generate_field();
+    let (field, mine_count) = generate_field();
 
     for row in &field {
         for cell in row {
@@ -66,19 +67,21 @@ fn main() {
     }
 }
 
-fn generate_field() -> RawField {
+fn generate_field() -> (RawField, u32) {
     let mut rng = rand::thread_rng();
     let mut field: RawField = [[0; WIDTH]; HEIGHT];
+    let mut mine_count = 0;
     for y in 0..HEIGHT {
         for x in 0..WIDTH {
-            if rng.gen::<f32>() > 0.9_f32 {
+            if rng.gen::<f32>() > MINE_PROBABILITY {
                 field[y][x] = 1;
+                mine_count += 1;
             } else {
                 field[y][x] = 0;
             }
         }
     }
-    field
+    (field, mine_count)
 }
 
 fn solve_field(field: RawField) -> SolvedField {
