@@ -12,6 +12,10 @@
 ☐1221
 */
 
+const WIDTH: usize = 7;
+const HEIGHT: usize = 5;
+
+#[derive(Debug)]
 enum FieldType {
     Empty,
     Touching(u8),
@@ -28,22 +32,26 @@ fn main() {
 
 fn generate_field() -> RawField {
     vec![
-        vec![0, 0, 0, 0, 0],
-        vec![0, 0, 1, 0, 0],
-        vec![0, 0, 0, 0, 0],
-        vec![0, 0, 1, 1, 0],
-        vec![0, 0, 0, 0, 0],
+        vec![0, 0, 0, 0, 0, 0, 0],
+        vec![0, 0, 1, 0, 0, 0, 0],
+        vec![0, 0, 0, 0, 0, 0, 0],
+        vec![0, 0, 1, 1, 0, 0, 0],
+        vec![0, 0, 0, 0, 0, 0, 0],
     ]
 }
 
 fn solve_field(field: RawField) -> SolvedField {
-    for x in 0..5 {
-        for y in 0..5 {
-            print!("{}", field[x][y]);
+    let mut newfield: Vec<Vec<FieldType>> = Vec::new();
+    for y in 0..HEIGHT {
+        let mut row: Vec<FieldType> = Vec::new();
+        for x in 0..WIDTH {
+            print!("{}", field[y][x]);
+            row.push(FieldType::Touching(5));
         }
         println!("");
+        newfield.push(row);
     }
-    vec![vec![]]
+    newfield
 }
 
 #[cfg(test)]
