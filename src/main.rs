@@ -95,17 +95,17 @@ fn solve_field(field: RawField) -> SolvedField {
             } else {
                 let mut mine_count = 0;
                 for neighbour in NEIGHBOURS {
-                        let (ny, nx) = (y as i32 + neighbour.0, x as i32 + neighbour.1);
-                        if ny < 0 || ny > HEIGHT as i32 - 1 || nx < 0 || nx > WIDTH as i32 - 1 {
-                            continue;
-                        }
-                        let (ny, nx) = (ny as usize, nx as usize);
-                        if ny == y && nx == x {
-                            continue;
-                        }
-                        if field[ny][nx] == 1 {
-                            mine_count += 1;
-                        }
+                    let (ny, nx) = (y as i32 + neighbour.0, x as i32 + neighbour.1);
+                    if ny < 0 || ny > HEIGHT as i32 - 1 || nx < 0 || nx > WIDTH as i32 - 1 {
+                        continue;
+                    }
+                    let (ny, nx) = (ny as usize, nx as usize);
+                    if ny == y && nx == x {
+                        continue;
+                    }
+                    if field[ny][nx] == 1 {
+                        mine_count += 1;
+                    }
                 }
                 if mine_count == 0 {
                     row.push(FieldType::Empty);
