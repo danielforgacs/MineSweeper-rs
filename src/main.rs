@@ -16,8 +16,8 @@ use rand::prelude::*;
 type RawField = [[usize; WIDTH]; HEIGHT];
 type SolvedField = [[FieldType; WIDTH]; HEIGHT];
 
-const WIDTH: usize = 7;
-const HEIGHT: usize = 5;
+const WIDTH: usize = 6;
+const HEIGHT: usize = 4;
 const NEIGHBOURS: [(i32, i32); 9] = [
     (-1, -1), (0, -1), (1, -1),
     (-1,  0), (0,  0), (1,  0),
