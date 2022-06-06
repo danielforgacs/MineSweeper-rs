@@ -14,7 +14,7 @@
 use rand::prelude::*;
 
 type RawField = [[usize; WIDTH]; HEIGHT];
-type SolvedField = [[FieldType; WIDTH]; HEIGHT];
+type SolvedField = [[Cell; WIDTH]; HEIGHT];
 
 const WIDTH: usize = 6;
 const HEIGHT: usize = 4;
@@ -32,6 +32,18 @@ enum FieldType {
     Touching(u8),
 }
 
+#[derive(Clone, Copy)]
+enum FieldState {
+    Hidden,
+    Shown,
+}
+
+#[derive(Clone, Copy)]
+struct Cell {
+    cell_type: FieldType,
+    state: FieldState,
+}
+
 impl std::fmt::Display for FieldType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -40,6 +52,12 @@ impl std::fmt::Display for FieldType {
             FieldType::Touching(x) => f.write_str(&format!("{}", x))?,
         }
         Ok(())
+    }
+}
+
+impl Cell {
+    fn new() -> Self {
+        Self { cell_type: FieldType::Empty, state: FieldState::Hidden }
     }
 }
 
@@ -59,12 +77,17 @@ fn main() {
     assert_eq!(field.len(), HEIGHT);
     assert_eq!(field[0].len(), WIDTH);
 
+    run(field, mine_count);
+}
+
+fn run(mut field: SolvedField, mut mine_count: u32) {
     for row in field {
         for cell in row {
-            print!("{}", cell);
+            print!("{}", cell.cell_type);
         }
         println!("");
     }
+
 }
 
 fn generate_field() -> (RawField, u32) {
@@ -85,11 +108,11 @@ fn generate_field() -> (RawField, u32) {
 }
 
 fn solve_field(field: RawField) -> SolvedField {
-    let mut newfield: SolvedField = [[FieldType::Empty; WIDTH]; HEIGHT];
+    let mut newfield: SolvedField = [[Cell::new(); WIDTH]; HEIGHT];
     for y in 0..HEIGHT {
         for x in 0..WIDTH {
             if field[y][x] == 1 {
-                newfield[y][x] = FieldType::Mine;
+                newfield[y][x].cell_type = FieldType::Mine;
             } else {
                 let mut mine_count = 0;
                 for neighbour in NEIGHBOURS {
@@ -106,9 +129,9 @@ fn solve_field(field: RawField) -> SolvedField {
                     }
                 }
                 if mine_count == 0 {
-                    newfield[y][x] = FieldType::Empty;
+                    newfield[y][x].cell_type = FieldType::Empty;
                 } else {
-                    newfield[y][x] = FieldType::Touching(mine_count);
+                    newfield[y][x].cell_type = FieldType::Touching(mine_count);
                 }
             }
         }
