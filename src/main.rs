@@ -43,6 +43,15 @@ impl std::fmt::Display for FieldType {
 
 fn main() {
     let field = generate_field();
+
+    for row in &field {
+        for cell in row {
+            print!("{}", cell);
+        }
+        println!("");
+    }
+    println!();
+
     let field = solve_field(field);
 
     assert_eq!(field.len(), HEIGHT);
@@ -57,13 +66,26 @@ fn main() {
 }
 
 fn generate_field() -> RawField {
-    vec![
-        vec![0, 0, 0, 0, 0, 0, 0],
-        vec![0, 0, 1, 0, 0, 0, 0],
-        vec![0, 0, 0, 0, 0, 0, 0],
-        vec![0, 0, 1, 1, 0, 0, 0],
-        vec![0, 0, 0, 0, 0, 0, 0],
-    ]
+    // vec![
+    //     vec![0, 0, 0, 0, 0, 0, 0],
+    //     vec![0, 0, 1, 0, 0, 0, 0],
+    //     vec![0, 0, 0, 0, 0, 0, 0],
+    //     vec![0, 0, 1, 1, 0, 0, 0],
+    //     vec![0, 0, 0, 0, 0, 0, 0],
+    // ]
+    let mut field: RawField = Vec::new();
+    for _ in 0..HEIGHT {
+        let mut row = Vec::new();
+        for _ in 0..WIDTH {
+            if rand::random() {
+                row.push(1);
+            } else {
+                row.push(0);
+            }
+        }
+        field.push(row);
+    }
+    field
 }
 
 fn solve_field(field: RawField) -> SolvedField {
