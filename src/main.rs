@@ -38,7 +38,7 @@ enum FieldType {
     Touching(u8),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 enum FieldState {
     Hidden,
     Shown,
@@ -50,13 +50,19 @@ struct Cell {
     state: FieldState,
 }
 
+impl FieldType {
+    fn to_text(&self) -> String {
+        match self {
+            FieldType::Empty => "\u{25cb}".to_string(),
+            FieldType::Mine => "\u{25cf}".to_string(),
+            FieldType::Touching(x) => format!("{}", x),
+        }
+    }
+}
+
 impl std::fmt::Display for FieldType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            FieldType::Empty => f.write_str("\u{25cb}")?,
-            FieldType::Mine => f.write_str("\u{25cf}")?,
-            FieldType::Touching(x) => f.write_str(&format!("{}", x))?,
-        }
+        f.write_str(&self.to_text())?;
         Ok(())
     }
 }
@@ -102,9 +108,13 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
                     // stdout.queue(crossterm::style::SetForegroundColor(crossterm::style::Color::Red))?;
                     stdout.queue(crossterm::style::SetBackgroundColor(crossterm::style::Color::Rgb { r: 80, g: 30, b: 20 }))?;
                 }
+                let mut current_cell = cell.cell_type.to_text();
+                if cell.state == FieldState::Hidden {
+                    current_cell = "X".to_string()
+                };
                 stdout
                     .queue(crossterm::cursor::MoveTo(y, x))?
-                    .queue(Print(cell.cell_type))?
+                    .queue(Print(current_cell))?
                     .queue(crossterm::style::ResetColor)?;
             }
             // println!();
@@ -135,7 +145,7 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
             }
         }
         if event == Event::Key(KeyCode::Enter.into()) {
-
+            field[sy as usize][sx as usize].state = FieldState::Shown;
         }
     }
     crossterm::terminal::disable_raw_mode()?;
