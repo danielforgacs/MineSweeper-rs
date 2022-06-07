@@ -94,13 +94,19 @@ fn main() {
     run(field, mine_count);
 }
 
-fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
+fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
     crossterm::terminal::enable_raw_mode()?;
     let mut stdout = stdout();
     // stdout.queue(crossterm::terminal::Clear{clea})
+    let mut mines_left = mine_count.clone();
     let (mut sy, mut sx) = (0, 0);
     loop {
-        stdout.queue(crossterm::terminal::Clear(crossterm::terminal::ClearType::All))?;
+        stdout
+            .queue(crossterm::terminal::Clear(crossterm::terminal::ClearType::All))?
+            .queue(MoveTo(WIDTH as u16 + 2, 1))?
+            .queue(Print(mine_count))?
+            .queue(MoveTo(WIDTH as u16 + 2, 3))?
+            .queue(Print(mines_left))?;
         for (y, row) in field.iter().enumerate() {
             let y = y as u16;
             for (x, cell) in row.iter().enumerate() {
@@ -143,7 +149,20 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
             }
         }
         if event == Event::Key(KeyCode::Char('m').into()) {
-            field[sy as usize][sx as usize].state = CellState::Marked;
+            // field[sy as usize][sx as usize].state = CellState::Marked;
+            // mines_left -= 1;
+
+            match field[sy as usize][sx as usize].state {
+                CellState::Hidden => {
+                    field[sy as usize][sx as usize].state = CellState::Marked;
+                    mines_left -= 1;
+                },
+                CellState::Marked => {
+                    field[sy as usize][sx as usize].state = CellState::Hidden;
+                    mines_left += 1;
+                },
+                _ => {},
+            };
         }
         if event == Event::Key(KeyCode::Up.into()) {
             if sx > 0 {
