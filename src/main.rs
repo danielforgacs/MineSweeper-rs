@@ -14,6 +14,7 @@
 use rand::prelude::*;
 use crossterm::event::{read, Event, KeyCode};
 use crossterm::{QueueableCommand, cursor};
+use crossterm::cursor::MoveTo;
 // use crossterm::Print;
 use std::io::{stdout, Write};
 // use std::io::{Write, };
@@ -31,7 +32,7 @@ const NEIGHBOURS: [(i32, i32); 9] = [
     (-1,  1), (0,  1), (1,  1),
 ];
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 enum FieldType {
     Empty,
     Mine,
@@ -146,9 +147,15 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
         }
         if event == Event::Key(KeyCode::Enter.into()) {
             field[sy as usize][sx as usize].state = FieldState::Shown;
+            if field[sy as usize][sx as usize].cell_type == FieldType::Mine {
+                stdout.queue(MoveTo(2, HEIGHT as u16 + 2))?
+                    .queue(Print("FOUND THE MINE - YOU LOST!"))?;
+                break;
+            }
         }
     }
     crossterm::terminal::disable_raw_mode()?;
+    println!("\n\n");
     Ok(())
 
 }
