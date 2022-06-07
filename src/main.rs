@@ -12,6 +12,12 @@
 ☐1221
 */
 use rand::prelude::*;
+use crossterm::event::{read, Event, KeyCode};
+use crossterm::{QueueableCommand, cursor};
+// use crossterm::Print;
+use std::io::{stdout, Write};
+// use std::io::{Write, };
+use crossterm::{queue, style::Print};
 
 type RawField = [[usize; WIDTH]; HEIGHT];
 type SolvedField = [[Cell; WIDTH]; HEIGHT];
@@ -80,13 +86,29 @@ fn main() {
     run(field, mine_count);
 }
 
-fn run(mut field: SolvedField, mut mine_count: u32) {
-    for row in field {
-        for cell in row {
-            print!("{}", cell.cell_type);
+fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
+    crossterm::terminal::enable_raw_mode();
+    let mut stdout = stdout();
+    let (sx, sy) = (0, 0);
+    loop {
+        for (y, row) in field.iter().enumerate() {
+            let y = y as u16;
+            for (x, cell) in row.iter().enumerate() {
+                let x = x as u16;
+                stdout
+                    .queue(crossterm::cursor::MoveTo(y, x))?
+                    .queue(Print(cell.cell_type))?;
+            }
+            println!();
         }
-        println!("");
+        let event = read()?;
+        if event == Event::Key(KeyCode::Char('q').into()) {
+            break;
+        }
+        stdout.flush();
     }
+    crossterm::terminal::disable_raw_mode();
+    Ok(())
 
 }
 
