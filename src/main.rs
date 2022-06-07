@@ -90,7 +90,7 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
     crossterm::terminal::enable_raw_mode();
     let mut stdout = stdout();
     // stdout.queue(crossterm::terminal::Clear{clea})
-    let (sy, sx) = (0, 0);
+    let (mut sy, mut sx) = (0, 0);
     loop {
         stdout.queue(crossterm::terminal::Clear(crossterm::terminal::ClearType::All))?;
         for (y, row) in field.iter().enumerate() {
@@ -99,22 +99,43 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
                 let x = x as u16;
                 if y == sy && x == sx {
                     // stdout.queue(crossterm::style::SetBackgroundColor(crossterm::style::Color::Green))?;
-                    stdout.queue(crossterm::style::SetForegroundColor(crossterm::style::Color::Red))?;
+                    // stdout.queue(crossterm::style::SetForegroundColor(crossterm::style::Color::Red))?;
+                    stdout.queue(crossterm::style::SetBackgroundColor(crossterm::style::Color::Rgb { r: 80, g: 30, b: 20 }))?;
                 }
                 stdout
                     .queue(crossterm::cursor::MoveTo(y, x))?
                     .queue(Print(cell.cell_type))?
                     .queue(crossterm::style::ResetColor)?;
             }
-            println!();
+            // println!();
         }
+        stdout.flush();
         let event = read()?;
         if event == Event::Key(KeyCode::Char('q').into()) {
             break;
         }
-        stdout.flush();
+        if event == Event::Key(KeyCode::Right.into()) {
+            if sy < WIDTH as u16 - 1 {
+                sy += 1;
+            }
+        }
+        if event == Event::Key(KeyCode::Left.into()) {
+            if sy > 0 {
+                sy -= 1;
+            }
+        }
+        if event == Event::Key(KeyCode::Down.into()) {
+            if sx < HEIGHT as u16 - 1 {
+                sx += 1;
+            }
+        }
+        if event == Event::Key(KeyCode::Up.into()) {
+            if sx > 0 {
+                sx -= 1;
+            }
+        }
     }
-    crossterm::terminal::disable_raw_mode();
+    crossterm::terminal::disable_raw_mode()?;
     Ok(())
 
 }
