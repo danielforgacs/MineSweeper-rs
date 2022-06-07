@@ -87,7 +87,7 @@ fn main() {
 }
 
 fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
-    crossterm::terminal::enable_raw_mode();
+    crossterm::terminal::enable_raw_mode()?;
     let mut stdout = stdout();
     // stdout.queue(crossterm::terminal::Clear{clea})
     let (mut sy, mut sx) = (0, 0);
@@ -109,7 +109,7 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
             }
             // println!();
         }
-        stdout.flush();
+        stdout.flush()?;
         let event = read()?;
         if event == Event::Key(KeyCode::Char('q').into()) {
             break;
@@ -133,6 +133,9 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
             if sx > 0 {
                 sx -= 1;
             }
+        }
+        if event == Event::Key(KeyCode::Enter.into()) {
+
         }
     }
     crossterm::terminal::disable_raw_mode()?;
