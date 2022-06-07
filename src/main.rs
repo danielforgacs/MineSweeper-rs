@@ -43,6 +43,7 @@ enum CellType {
 enum CellState {
     Hidden,
     Shown,
+    Marked,
 }
 
 #[derive(Clone, Copy)]
@@ -109,9 +110,10 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
                     // stdout.queue(crossterm::style::SetForegroundColor(crossterm::style::Color::Red))?;
                     stdout.queue(crossterm::style::SetBackgroundColor(crossterm::style::Color::Rgb { r: 80, g: 30, b: 20 }))?;
                 }
-                let mut current_cell = cell.cell_type.to_text();
-                if cell.state == CellState::Hidden {
-                    current_cell = "X".to_string()
+                let current_cell = match cell.state {
+                    CellState::Hidden => "X".to_string(),
+                    CellState::Shown => cell.cell_type.to_text(),
+                    CellState::Marked => "B".to_string(),
                 };
                 stdout
                     .queue(crossterm::cursor::MoveTo(y, x))?
@@ -140,6 +142,9 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
                 sx += 1;
             }
         }
+        if event == Event::Key(KeyCode::Char('m').into()) {
+            field[sy as usize][sx as usize].state = CellState::Marked;
+        }
         if event == Event::Key(KeyCode::Up.into()) {
             if sx > 0 {
                 sx -= 1;
@@ -147,10 +152,16 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
         }
         if event == Event::Key(KeyCode::Enter.into()) {
             field[sy as usize][sx as usize].state = CellState::Shown;
-            if field[sy as usize][sx as usize].cell_type == CellType::Mine {
-                stdout.queue(MoveTo(2, HEIGHT as u16 + 2))?
-                    .queue(Print("FOUND THE MINE - YOU LOST!"))?;
-                break;
+            match field[sy as usize][sx as usize].cell_type {
+                CellType::Empty => {},
+                CellType::Mine => {
+                    stdout
+                        .queue(MoveTo(2, HEIGHT as u16 + 2))?
+                        .queue(Print("FOUND THE MINE - YOU LOST!"))?;
+                    break;
+                },
+                CellType::Touching(count) => {},
+
             }
         }
     }
