@@ -10,7 +10,7 @@ type SolvedField = [[Cell; HEIGHT]; WIDTH];
 
 const WIDTH: usize = 18;
 const HEIGHT: usize = 9;
-const MINE_PROBABILITY: f32 = 0.97;
+const MINE_PROBABILITY: f32 = 0.9;
 const NEIGHBOURS: [(i32, i32); 9] = [
     (-1, -1), (0, -1), (1, -1),
     (-1,  0), (0,  0), (1,  0),
