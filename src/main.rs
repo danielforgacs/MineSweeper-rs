@@ -8,8 +8,10 @@ use crossterm::{style::Print};
 type RawField = [[usize; HEIGHT]; WIDTH];
 type SolvedField = [[Cell; HEIGHT]; WIDTH];
 
-const WIDTH: usize = 18;
-const HEIGHT: usize = 9;
+// const WIDTH: usize = 18;
+const WIDTH: usize = 5;
+// const HEIGHT: usize = 9;
+const HEIGHT: usize = 4;
 const MINE_PROBABILITY: f32 = 0.9;
 const NEIGHBOURS: [(i32, i32); 9] = [
     (-1, -1), (0, -1), (1, -1),
@@ -71,18 +73,20 @@ fn main() {
     run(field, mine_count).unwrap();
 }
 
-fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
+fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
     crossterm::terminal::enable_raw_mode()?;
     let mut stdout = stdout();
-    let mut mines_left = mine_count.clone();
+    let mut flags = mine_count.clone() as i32;
     let (mut sy, mut sx) = (0, 0);
     loop {
         stdout
             .queue(crossterm::terminal::Clear(crossterm::terminal::ClearType::All))?
-            .queue(MoveTo(WIDTH as u16 + 2, 1))?
-            .queue(Print(mine_count))?
             .queue(MoveTo(WIDTH as u16 + 2, 3))?
-            .queue(Print(mines_left))?;
+            .queue(Print(flags))?;
+        // For debugging:
+        stdout
+            .queue(MoveTo(WIDTH as u16 + 2, 1))?
+            .queue(Print(mine_count))?;
         for (y, row) in field.iter().enumerate() {
             let y = y as u16;
             for (x, cell) in row.iter().enumerate() {
@@ -99,6 +103,10 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
                     .queue(crossterm::cursor::MoveTo(y, x))?
                     .queue(Print(current_cell))?
                     .queue(crossterm::style::ResetColor)?;
+                // For debugging:
+                stdout
+                    .queue(crossterm::cursor::MoveTo(y + 30, x))?
+                    .queue(Print(cell.cell_type))?;
             }
         }
         stdout.flush()?;
@@ -124,11 +132,24 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
             match action_cell.state {
                 CellState::Hidden => {
                     action_cell.state = CellState::Marked;
-                    mines_left -= 1;
+                    flags -= 1;
+                    if action_cell.cell_type == CellType::Mine {
+                        mine_count -= 1;
+                        if mine_count == 0 {
+                            stdout
+                                .queue(MoveTo(2, HEIGHT as u16 + 2))?
+                                .queue(Print("FLAGGED ALL MINES - YOU WON!"))?
+                                .flush()?;
+                            break;
+                        }
+                    }
                 },
                 CellState::Marked => {
                     action_cell.state = CellState::Hidden;
-                    mines_left += 1;
+                    flags += 1;
+                    if action_cell.cell_type == CellType::Mine {
+                        mine_count += 1;
+                    }
                 },
                 _ => {},
             };
