@@ -134,16 +134,17 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
             };
         }
         if event == Event::Key(KeyCode::Enter.into()) {
-            action_cell.state = CellState::Shown;
             match action_cell.cell_type {
-                CellType::Empty => { reveal_around_empty(&mut field, &(sy as i32), &(sx as i32)) },
+                CellType::Empty => {
+                    reveal_around_empty(&mut field, &(sy as i32), &(sx as i32))
+                },
                 CellType::Mine => {
                     stdout
                         .queue(MoveTo(2, HEIGHT as u16 + 2))?
                         .queue(Print("FOUND THE MINE - YOU LOST!"))?;
                     break;
                 },
-                CellType::Touching(_) => {},
+                CellType::Touching(_) => { action_cell.state = CellState::Shown; },
             }
         }
     }
@@ -154,10 +155,13 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
 }
 
 fn reveal_around_empty(field: &mut SolvedField, sy: &i32, sx: &i32) {
-    if *sy < 0 || *sy > (WIDTH as i32) - 1 || *sx < 1 || *sx > (HEIGHT as i32) - 1 {
+    if *sy < 0 || *sy > (WIDTH as i32) - 1 || *sx < 0 || *sx > (HEIGHT as i32) - 1 {
         return;
     }
     let cell = &mut field[*sy as usize][*sx as usize];
+    if cell.state == CellState::Shown {
+        return;
+    }
     match cell.cell_type {
         CellType::Empty => {
             cell.state = CellState::Shown;
