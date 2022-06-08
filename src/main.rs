@@ -18,12 +18,8 @@ const NEIGHBOURS: [(i32, i32); 9] = [
 ];
 
 const EMPTY_CELL: &str = "\u{25a1}";
-// const EMPTY_CELL: &str = "\u{2610}";
 const MINE_CELL: &str = "\u{25cf}";
-// const HIDDEN_CELL: &str = "X";
 const HIDDEN_CELL: &str = "\u{2981}";
-// const FLAGGED_CELL: &str = "B";
-// const FLAGGED_CELL: &str = "\u{1f571}";
 const FLAGGED_CELL: &str = "\u{2620}";
 
 #[derive(Clone, Copy, PartialEq)]
@@ -113,19 +109,16 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
             break;
         }
         if event == Event::Key(KeyCode::Right.into()) {
-            if sy < WIDTH as u16 - 1 {
-                sy += 1;
-            }
+            if sy < WIDTH as u16 - 1 { sy += 1; }
         }
         if event == Event::Key(KeyCode::Left.into()) {
-            if sy > 0 {
-                sy -= 1;
-            }
+            if sy > 0 { sy -= 1; }
         }
         if event == Event::Key(KeyCode::Down.into()) {
-            if sx < HEIGHT as u16 - 1 {
-                sx += 1;
-            }
+            if sx < HEIGHT as u16 - 1 { sx += 1; }
+        }
+        if event == Event::Key(KeyCode::Up.into()) {
+            if sx > 0 { sx -= 1; }
         }
         if event == Event::Key(KeyCode::Char('m').into()) {
             match action_cell.state {
@@ -139,11 +132,6 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
                 },
                 _ => {},
             };
-        }
-        if event == Event::Key(KeyCode::Up.into()) {
-            if sx > 0 {
-                sx -= 1;
-            }
         }
         if event == Event::Key(KeyCode::Enter.into()) {
             action_cell.state = CellState::Shown;
