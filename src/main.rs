@@ -1,97 +1,221 @@
-/*
-☐☐☐☐☐
-☐☐x☐☐
-☐☐☐☐☐
-☐☐xx☐
-☐☐☐☐☐
-
-☐111☐
-☐1x1☐
-☐2221
-☐1xx1
-☐1221
-*/
 use rand::prelude::*;
+use crossterm::event::{read, Event, KeyCode};
+use crossterm::{QueueableCommand};
+use crossterm::cursor::MoveTo;
+use std::io::{stdout, Write};
+use crossterm::{style::Print};
 
-type RawField = [[usize; WIDTH]; HEIGHT];
-type SolvedField = [[FieldType; WIDTH]; HEIGHT];
+type RawField = [[usize; HEIGHT]; WIDTH];
+type SolvedField = [[Cell; HEIGHT]; WIDTH];
 
-const WIDTH: usize = 6;
-const HEIGHT: usize = 4;
+const WIDTH: usize = 18;
+const HEIGHT: usize = 9;
+const MINE_PROBABILITY: f32 = 0.9;
 const NEIGHBOURS: [(i32, i32); 9] = [
     (-1, -1), (0, -1), (1, -1),
     (-1,  0), (0,  0), (1,  0),
     (-1,  1), (0,  1), (1,  1),
 ];
 
-#[derive(Clone, Copy)]
-enum FieldType {
+const EMPTY_CELL: &str = "\u{25a1}";
+const MINE_CELL: &str = "\u{2623}";
+const HIDDEN_CELL: &str = "\u{2981}";
+const FLAGGED_CELL: &str = "\u{2620}";
+
+#[derive(Clone, Copy, PartialEq)]
+enum CellType {
     Empty,
     Mine,
     Touching(u8),
 }
 
-impl std::fmt::Display for FieldType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+#[derive(Clone, Copy, PartialEq)]
+enum CellState {
+    Hidden,
+    Shown,
+    Marked,
+}
+
+#[derive(Clone, Copy)]
+struct Cell {
+    cell_type: CellType,
+    state: CellState,
+}
+
+impl CellType {
+    fn to_text(&self) -> String {
         match self {
-            FieldType::Empty => f.write_str("\u{25cb}")?,
-            FieldType::Mine => f.write_str("\u{25cf}")?,
-            FieldType::Touching(x) => f.write_str(&format!("{}", x))?,
+            CellType::Empty => EMPTY_CELL.to_string(),
+            CellType::Mine => MINE_CELL.to_string(),
+            CellType::Touching(x) => format!("{}", x),
         }
+    }
+}
+
+impl std::fmt::Display for CellType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.to_text())?;
         Ok(())
     }
 }
 
-fn main() {
-    let field = generate_field();
-
-    for row in &field {
-        for cell in row {
-            print!("{}", cell);
-        }
-        println!("");
-    }
-    println!();
-
-    let field = solve_field(field);
-
-    assert_eq!(field.len(), HEIGHT);
-    assert_eq!(field[0].len(), WIDTH);
-
-    for row in field {
-        for cell in row {
-            print!("{}", cell);
-        }
-        println!("");
+impl Cell {
+    fn new() -> Self {
+        Self { cell_type: CellType::Empty, state: CellState::Hidden }
     }
 }
 
-fn generate_field() -> RawField {
+fn main() {
+    let (field, mine_count) = generate_field();
+    let field = solve_field(field);
+    run(field, mine_count).unwrap();
+}
+
+fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
+    crossterm::terminal::enable_raw_mode()?;
+    let mut stdout = stdout();
+    let mut mines_left = mine_count.clone();
+    let (mut sy, mut sx) = (0, 0);
+    loop {
+        stdout
+            .queue(crossterm::terminal::Clear(crossterm::terminal::ClearType::All))?
+            .queue(MoveTo(WIDTH as u16 + 2, 1))?
+            .queue(Print(mine_count))?
+            .queue(MoveTo(WIDTH as u16 + 2, 3))?
+            .queue(Print(mines_left))?;
+        for (y, row) in field.iter().enumerate() {
+            let y = y as u16;
+            for (x, cell) in row.iter().enumerate() {
+                let x = x as u16;
+                if y == sy && x == sx {
+                    stdout.queue(crossterm::style::SetBackgroundColor(crossterm::style::Color::Rgb { r: 80, g: 30, b: 20 }))?;
+                }
+                let current_cell = match cell.state {
+                    CellState::Hidden => HIDDEN_CELL.to_string(),
+                    CellState::Shown => cell.cell_type.to_text(),
+                    CellState::Marked => FLAGGED_CELL.to_string(),
+                };
+                stdout
+                    .queue(crossterm::cursor::MoveTo(y, x))?
+                    .queue(Print(current_cell))?
+                    .queue(crossterm::style::ResetColor)?;
+            }
+        }
+        stdout.flush()?;
+        let event = read()?;
+        let action_cell = &mut field[sy as usize][sx as usize];
+
+        if event == Event::Key(KeyCode::Char('q').into()) {
+            break;
+        }
+        if event == Event::Key(KeyCode::Right.into()) {
+            if sy < WIDTH as u16 - 1 { sy += 1; }
+        }
+        if event == Event::Key(KeyCode::Left.into()) {
+            if sy > 0 { sy -= 1; }
+        }
+        if event == Event::Key(KeyCode::Down.into()) {
+            if sx < HEIGHT as u16 - 1 { sx += 1; }
+        }
+        if event == Event::Key(KeyCode::Up.into()) {
+            if sx > 0 { sx -= 1; }
+        }
+        if event == Event::Key(KeyCode::Char('m').into()) {
+            match action_cell.state {
+                CellState::Hidden => {
+                    action_cell.state = CellState::Marked;
+                    mines_left -= 1;
+                },
+                CellState::Marked => {
+                    action_cell.state = CellState::Hidden;
+                    mines_left += 1;
+                },
+                _ => {},
+            };
+        }
+        if event == Event::Key(KeyCode::Enter.into()) {
+            action_cell.state = CellState::Shown;
+            match action_cell.cell_type {
+                CellType::Empty => { reveal_around_empty(&mut field, &sy, &sx) },
+                CellType::Mine => {
+                    stdout
+                        .queue(MoveTo(2, HEIGHT as u16 + 2))?
+                        .queue(Print("FOUND THE MINE - YOU LOST!"))?;
+                    break;
+                },
+                CellType::Touching(_) => {},
+            }
+        }
+    }
+    crossterm::terminal::disable_raw_mode()?;
+    println!("\n\n");
+    Ok(())
+
+}
+
+fn reveal_around_empty(field: &mut SolvedField, sy: &u16, sx: &u16) {
+    if *sy > 0 {
+        let cell = &mut field[*sy as usize - 1][*sx as usize];
+        match cell.cell_type {
+            CellType::Empty => cell.state = CellState::Shown,
+            CellType::Touching(_) => cell.state = CellState::Shown,
+            _ => {}
+        }
+    }
+    if *sy < WIDTH as u16 - 1 {
+        let cell = &mut field[*sy as usize + 1][*sx as usize];
+        match cell.cell_type {
+            CellType::Empty => cell.state = CellState::Shown,
+            CellType::Touching(_) => cell.state = CellState::Shown,
+            _ => {}
+        }
+    }
+    if *sx > 1 {
+        let cell = &mut field[*sy as usize][*sx as usize - 1];
+        match cell.cell_type {
+            CellType::Empty => cell.state = CellState::Shown,
+            CellType::Touching(_) => cell.state = CellState::Shown,
+            _ => {}
+        }
+    }
+    if *sx < WIDTH as u16 - 1 {
+        let cell = &mut field[*sy as usize][*sx as usize + 1];
+        match cell.cell_type {
+            CellType::Empty => cell.state = CellState::Shown,
+            CellType::Touching(_) => cell.state = CellState::Shown,
+            _ => {}
+        }
+    }
+}
+
+fn generate_field() -> (RawField, u32) {
     let mut rng = rand::thread_rng();
-    let mut field: RawField = [[0; WIDTH]; HEIGHT];
-    for y in 0..HEIGHT {
-        for x in 0..WIDTH {
-            if rng.gen::<f32>() > 0.9_f32 {
+    let mut field: RawField = [[0; HEIGHT]; WIDTH];
+    let mut mine_count = 0;
+    for y in 0..WIDTH {
+        for x in 0..HEIGHT {
+            if rng.gen::<f32>() > MINE_PROBABILITY {
                 field[y][x] = 1;
+                mine_count += 1;
             } else {
                 field[y][x] = 0;
             }
         }
     }
-    field
+    (field, mine_count)
 }
 
 fn solve_field(field: RawField) -> SolvedField {
-    let mut newfield: SolvedField = [[FieldType::Empty; WIDTH]; HEIGHT];
-    for y in 0..HEIGHT {
-        for x in 0..WIDTH {
+    let mut newfield: SolvedField = [[Cell::new(); HEIGHT]; WIDTH];
+    for y in 0..WIDTH {
+        for x in 0..HEIGHT {
             if field[y][x] == 1 {
-                newfield[y][x] = FieldType::Mine;
+                newfield[y][x].cell_type = CellType::Mine;
             } else {
                 let mut mine_count = 0;
                 for neighbour in NEIGHBOURS {
                     let (ny, nx) = (y as i32 + neighbour.0, x as i32 + neighbour.1);
-                    if ny < 0 || ny > HEIGHT as i32 - 1 || nx < 0 || nx > WIDTH as i32 - 1 {
+                    if ny < 0 || ny > WIDTH as i32 - 1 || nx < 0 || nx > HEIGHT as i32 - 1 {
                         continue;
                     }
                     let (ny, nx) = (ny as usize, nx as usize);
@@ -103,21 +227,12 @@ fn solve_field(field: RawField) -> SolvedField {
                     }
                 }
                 if mine_count == 0 {
-                    newfield[y][x] = FieldType::Empty;
+                    newfield[y][x].cell_type = CellType::Empty;
                 } else {
-                    newfield[y][x] = FieldType::Touching(mine_count);
+                    newfield[y][x].cell_type = CellType::Touching(mine_count);
                 }
             }
         }
     }
     newfield
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn solve_field() {
-    }
 }
