@@ -12,7 +12,8 @@ type SolvedField = [[Cell; HEIGHT]; WIDTH];
 const WIDTH: usize = 5;
 // const HEIGHT: usize = 9;
 const HEIGHT: usize = 4;
-const MINE_PROBABILITY: f32 = 0.9;
+// const MINE_PROBABILITY: f32 = 0.9;
+const MINE_PROBABILITY: f32 = 1.2;
 const NEIGHBOURS: [(i32, i32); 9] = [
     (-1, -1), (0, -1), (1, -1),
     (-1,  0), (0,  0), (1,  0),
@@ -68,9 +69,21 @@ impl Cell {
 }
 
 fn main() {
-    let (field, mine_count) = generate_field();
-    let field = solve_field(field);
-    run(field, mine_count).unwrap();
+    let mut limit = 100;
+    loop {
+        let (field, mine_count) = generate_field();
+        if mine_count < 1 {
+            limit -= 1;
+            if limit == 0 {
+                println!("Could not generate mines. Check the mine treshold.");
+                break;
+            }
+            continue;
+        }
+        let field = solve_field(field);
+        run(field, mine_count).unwrap();
+        break;
+    }
 }
 
 fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
