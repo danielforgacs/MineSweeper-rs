@@ -17,10 +17,14 @@ const NEIGHBOURS: [(i32, i32); 9] = [
     (-1,  1), (0,  1), (1,  1),
 ];
 
-const EMPTY_CELL: &str = "\u{25cb}";
+const EMPTY_CELL: &str = "\u{25a1}";
+// const EMPTY_CELL: &str = "\u{2610}";
 const MINE_CELL: &str = "\u{25cf}";
-const HIDDEN_CELL: &str = "X";
-const FLAGGED_CELL: &str = "B";
+// const HIDDEN_CELL: &str = "X";
+const HIDDEN_CELL: &str = "\u{2981}";
+// const FLAGGED_CELL: &str = "B";
+// const FLAGGED_CELL: &str = "\u{1f571}";
+const FLAGGED_CELL: &str = "\u{2620}";
 
 #[derive(Clone, Copy, PartialEq)]
 enum CellType {
