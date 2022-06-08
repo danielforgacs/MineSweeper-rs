@@ -1,24 +1,9 @@
-/*
-☐☐☐☐☐
-☐☐x☐☐
-☐☐☐☐☐
-☐☐xx☐
-☐☐☐☐☐
-
-☐111☐
-☐1x1☐
-☐2221
-☐1xx1
-☐1221
-*/
 use rand::prelude::*;
 use crossterm::event::{read, Event, KeyCode};
-use crossterm::{QueueableCommand, cursor};
+use crossterm::{QueueableCommand};
 use crossterm::cursor::MoveTo;
-// use crossterm::Print;
 use std::io::{stdout, Write};
-// use std::io::{Write, };
-use crossterm::{queue, style::Print};
+use crossterm::{style::Print};
 
 type RawField = [[usize; HEIGHT]; WIDTH];
 type SolvedField = [[Cell; HEIGHT]; WIDTH];
@@ -77,27 +62,13 @@ impl Cell {
 
 fn main() {
     let (field, mine_count) = generate_field();
-
-    for row in &field {
-        for cell in row {
-            print!("{}", cell);
-        }
-        println!("");
-    }
-    println!();
-
     let field = solve_field(field);
-
-    assert_eq!(field.len(), WIDTH);
-    assert_eq!(field[0].len(), HEIGHT);
-
-    run(field, mine_count);
+    run(field, mine_count).unwrap();
 }
 
 fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
     crossterm::terminal::enable_raw_mode()?;
     let mut stdout = stdout();
-    // stdout.queue(crossterm::terminal::Clear{clea})
     let mut mines_left = mine_count.clone();
     let (mut sy, mut sx) = (0, 0);
     loop {
@@ -112,8 +83,6 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
             for (x, cell) in row.iter().enumerate() {
                 let x = x as u16;
                 if y == sy && x == sx {
-                    // stdout.queue(crossterm::style::SetBackgroundColor(crossterm::style::Color::Green))?;
-                    // stdout.queue(crossterm::style::SetForegroundColor(crossterm::style::Color::Red))?;
                     stdout.queue(crossterm::style::SetBackgroundColor(crossterm::style::Color::Rgb { r: 80, g: 30, b: 20 }))?;
                 }
                 let current_cell = match cell.state {
@@ -126,7 +95,6 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
                     .queue(Print(current_cell))?
                     .queue(crossterm::style::ResetColor)?;
             }
-            // println!();
         }
         stdout.flush()?;
         let event = read()?;
@@ -149,9 +117,6 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
             }
         }
         if event == Event::Key(KeyCode::Char('m').into()) {
-            // field[sy as usize][sx as usize].state = CellState::Marked;
-            // mines_left -= 1;
-
             match field[sy as usize][sx as usize].state {
                 CellState::Hidden => {
                     field[sy as usize][sx as usize].state = CellState::Marked;
@@ -179,8 +144,7 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
                         .queue(Print("FOUND THE MINE - YOU LOST!"))?;
                     break;
                 },
-                CellType::Touching(count) => {},
-
+                CellType::Touching(_) => {},
             }
         }
     }
@@ -237,13 +201,4 @@ fn solve_field(field: RawField) -> SolvedField {
         }
     }
     newfield
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn solve_field() {
-    }
 }
