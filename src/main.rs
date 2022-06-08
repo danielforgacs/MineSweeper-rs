@@ -134,16 +134,17 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
             };
         }
         if event == Event::Key(KeyCode::Enter.into()) {
-            action_cell.state = CellState::Shown;
             match action_cell.cell_type {
-                CellType::Empty => { reveal_around_empty(&mut field, &sy, &sx) },
+                CellType::Empty => {
+                    reveal_around_empty(&mut field, &(sy as i32), &(sx as i32))
+                },
                 CellType::Mine => {
                     stdout
                         .queue(MoveTo(2, HEIGHT as u16 + 2))?
                         .queue(Print("FOUND THE MINE - YOU LOST!"))?;
                     break;
                 },
-                CellType::Touching(_) => {},
+                CellType::Touching(_) => { action_cell.state = CellState::Shown; },
             }
         }
     }
@@ -153,38 +154,24 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
 
 }
 
-fn reveal_around_empty(field: &mut SolvedField, sy: &u16, sx: &u16) {
-    if *sy > 0 {
-        let cell = &mut field[*sy as usize - 1][*sx as usize];
-        match cell.cell_type {
-            CellType::Empty => cell.state = CellState::Shown,
-            CellType::Touching(_) => cell.state = CellState::Shown,
-            _ => {}
-        }
+fn reveal_around_empty(field: &mut SolvedField, sy: &i32, sx: &i32) {
+    if *sy < 0 || *sy > (WIDTH as i32) - 1 || *sx < 0 || *sx > (HEIGHT as i32) - 1 {
+        return;
     }
-    if *sy < WIDTH as u16 - 1 {
-        let cell = &mut field[*sy as usize + 1][*sx as usize];
-        match cell.cell_type {
-            CellType::Empty => cell.state = CellState::Shown,
-            CellType::Touching(_) => cell.state = CellState::Shown,
-            _ => {}
-        }
+    let cell = &mut field[*sy as usize][*sx as usize];
+    if cell.state == CellState::Shown {
+        return;
     }
-    if *sx > 1 {
-        let cell = &mut field[*sy as usize][*sx as usize - 1];
-        match cell.cell_type {
-            CellType::Empty => cell.state = CellState::Shown,
-            CellType::Touching(_) => cell.state = CellState::Shown,
-            _ => {}
-        }
-    }
-    if *sx < WIDTH as u16 - 1 {
-        let cell = &mut field[*sy as usize][*sx as usize + 1];
-        match cell.cell_type {
-            CellType::Empty => cell.state = CellState::Shown,
-            CellType::Touching(_) => cell.state = CellState::Shown,
-            _ => {}
-        }
+    match cell.cell_type {
+        CellType::Empty => {
+            cell.state = CellState::Shown;
+            reveal_around_empty(field, &(sy - 1), sx);
+            reveal_around_empty(field, &(sy + 1), sx);
+            reveal_around_empty(field, sy, &(sx - 1));
+            reveal_around_empty(field, sy, &(sx + 1));
+        },
+        CellType::Touching(_) => cell.state = CellState::Shown,
+        _ => {},
     }
 }
 
