@@ -139,7 +139,7 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
         if event == Event::Key(KeyCode::Enter.into()) {
             action_cell.state = CellState::Shown;
             match action_cell.cell_type {
-                CellType::Empty => {},
+                CellType::Empty => { reveal_around_empty(&mut field, &sy, &sx) },
                 CellType::Mine => {
                     stdout
                         .queue(MoveTo(2, HEIGHT as u16 + 2))?
@@ -154,6 +154,23 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
     println!("\n\n");
     Ok(())
 
+}
+
+fn reveal_around_empty(field: &mut SolvedField, sy: &u16, sx: &u16) {
+    if *sy > 0 {
+        match field[*sy as usize - 1][*sx as usize].cell_type {
+            CellType::Empty => field[*sy as usize - 1][*sx as usize].state = CellState::Shown,
+            CellType::Touching(_) => field[*sy as usize - 1][*sx as usize].state = CellState::Shown,
+            _ => {}
+        }
+    }
+    if *sy < WIDTH as u16 - 1 {
+        match field[*sy as usize + 1][*sx as usize].cell_type {
+            CellType::Empty => field[*sy as usize + 1][*sx as usize].state = CellState::Shown,
+            CellType::Touching(_) => field[*sy as usize + 1][*sx as usize].state = CellState::Shown,
+            _ => {}
+        }
+    }
 }
 
 fn generate_field() -> (RawField, u32) {
