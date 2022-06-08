@@ -98,6 +98,8 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
         }
         stdout.flush()?;
         let event = read()?;
+        let action_cell = &mut field[sy as usize][sx as usize];
+
         if event == Event::Key(KeyCode::Char('q').into()) {
             break;
         }
@@ -117,13 +119,13 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
             }
         }
         if event == Event::Key(KeyCode::Char('m').into()) {
-            match field[sy as usize][sx as usize].state {
+            match action_cell.state {
                 CellState::Hidden => {
-                    field[sy as usize][sx as usize].state = CellState::Marked;
+                    action_cell.state = CellState::Marked;
                     mines_left -= 1;
                 },
                 CellState::Marked => {
-                    field[sy as usize][sx as usize].state = CellState::Hidden;
+                    action_cell.state = CellState::Hidden;
                     mines_left += 1;
                 },
                 _ => {},
@@ -135,8 +137,8 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
             }
         }
         if event == Event::Key(KeyCode::Enter.into()) {
-            field[sy as usize][sx as usize].state = CellState::Shown;
-            match field[sy as usize][sx as usize].cell_type {
+            action_cell.state = CellState::Shown;
+            match action_cell.cell_type {
                 CellType::Empty => {},
                 CellType::Mine => {
                     stdout
