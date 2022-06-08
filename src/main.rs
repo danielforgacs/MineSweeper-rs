@@ -8,12 +8,9 @@ use crossterm::{style::Print};
 type RawField = [[usize; HEIGHT]; WIDTH];
 type SolvedField = [[Cell; HEIGHT]; WIDTH];
 
-// const WIDTH: usize = 18;
-const WIDTH: usize = 5;
-// const HEIGHT: usize = 9;
-const HEIGHT: usize = 4;
-// const MINE_PROBABILITY: f32 = 0.9;
-const MINE_PROBABILITY: f32 = 1.2;
+const WIDTH: usize = 18;
+const HEIGHT: usize = 9;
+const MINE_PROBABILITY: f32 = 0.9;
 const NEIGHBOURS: [(i32, i32); 9] = [
     (-1, -1), (0, -1), (1, -1),
     (-1,  0), (0,  0), (1,  0),
@@ -24,6 +21,8 @@ const EMPTY_CELL: &str = "\u{25a1}";
 const MINE_CELL: &str = "\u{2623}";
 const HIDDEN_CELL: &str = "\u{2981}";
 const FLAGGED_CELL: &str = "\u{2620}";
+
+const DEBUG: bool = false;
 
 #[derive(Clone, Copy, PartialEq)]
 enum CellType {
@@ -97,9 +96,11 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
             .queue(MoveTo(WIDTH as u16 + 2, 3))?
             .queue(Print(flags))?;
         // For debugging:
-        stdout
-            .queue(MoveTo(WIDTH as u16 + 2, 1))?
-            .queue(Print(mine_count))?;
+        if DEBUG {
+            stdout
+                .queue(MoveTo(WIDTH as u16 + 2, 1))?
+                .queue(Print(mine_count))?;
+        }
         for (y, row) in field.iter().enumerate() {
             let y = y as u16;
             for (x, cell) in row.iter().enumerate() {
@@ -117,9 +118,11 @@ fn run(mut field: SolvedField, mut mine_count: u32) -> crossterm::Result<()> {
                     .queue(Print(current_cell))?
                     .queue(crossterm::style::ResetColor)?;
                 // For debugging:
-                stdout
-                    .queue(crossterm::cursor::MoveTo(y + 30, x))?
-                    .queue(Print(cell.cell_type))?;
+                if DEBUG {
+                    stdout
+                        .queue(crossterm::cursor::MoveTo(y + 30, x))?
+                        .queue(Print(cell.cell_type))?;
+                }
             }
         }
         stdout.flush()?;
