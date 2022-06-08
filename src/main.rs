@@ -158,16 +158,18 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
 
 fn reveal_around_empty(field: &mut SolvedField, sy: &u16, sx: &u16) {
     if *sy > 0 {
-        match field[*sy as usize - 1][*sx as usize].cell_type {
-            CellType::Empty => field[*sy as usize - 1][*sx as usize].state = CellState::Shown,
-            CellType::Touching(_) => field[*sy as usize - 1][*sx as usize].state = CellState::Shown,
+        let cell = &mut field[*sy as usize - 1][*sx as usize];
+        match cell.cell_type {
+            CellType::Empty => cell.state = CellState::Shown,
+            CellType::Touching(_) => cell.state = CellState::Shown,
             _ => {}
         }
     }
     if *sy < WIDTH as u16 - 1 {
-        match field[*sy as usize + 1][*sx as usize].cell_type {
-            CellType::Empty => field[*sy as usize + 1][*sx as usize].state = CellState::Shown,
-            CellType::Touching(_) => field[*sy as usize + 1][*sx as usize].state = CellState::Shown,
+        let cell = &mut field[*sy as usize + 1][*sx as usize];
+        match cell.cell_type {
+            CellType::Empty => cell.state = CellState::Shown,
+            CellType::Touching(_) => cell.state = CellState::Shown,
             _ => {}
         }
     }
