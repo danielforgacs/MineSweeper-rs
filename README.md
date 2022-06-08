@@ -15,3 +15,6 @@ A simple minesweeper game with a terminal ui.
 - 1-9: number of mines in contact with the cell
 - `☠`: cell marked as mine
 - `☣`: mine
+
+![](demo/minesweeper.gif)
+![](demo/minesweeper_big.png)
