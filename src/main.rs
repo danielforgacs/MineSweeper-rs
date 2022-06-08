@@ -18,7 +18,7 @@ const NEIGHBOURS: [(i32, i32); 9] = [
 ];
 
 const EMPTY_CELL: &str = "\u{25a1}";
-const MINE_CELL: &str = "\u{25cf}";
+const MINE_CELL: &str = "\u{2623}";
 const HIDDEN_CELL: &str = "\u{2981}";
 const FLAGGED_CELL: &str = "\u{2620}";
 
