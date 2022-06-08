@@ -17,6 +17,11 @@ const NEIGHBOURS: [(i32, i32); 9] = [
     (-1,  1), (0,  1), (1,  1),
 ];
 
+const EMPTY_CELL: &str = "\u{25cb}";
+const MINE_CELL: &str = "\u{25cf}";
+const HIDDEN_CELL: &str = "X";
+const FLAGGED_CELL: &str = "B";
+
 #[derive(Clone, Copy, PartialEq)]
 enum CellType {
     Empty,
@@ -40,8 +45,8 @@ struct Cell {
 impl CellType {
     fn to_text(&self) -> String {
         match self {
-            CellType::Empty => "\u{25cb}".to_string(),
-            CellType::Mine => "\u{25cf}".to_string(),
+            CellType::Empty => EMPTY_CELL.to_string(),
+            CellType::Mine => MINE_CELL.to_string(),
             CellType::Touching(x) => format!("{}", x),
         }
     }
@@ -86,9 +91,9 @@ fn run(mut field: SolvedField, mine_count: u32) -> crossterm::Result<()> {
                     stdout.queue(crossterm::style::SetBackgroundColor(crossterm::style::Color::Rgb { r: 80, g: 30, b: 20 }))?;
                 }
                 let current_cell = match cell.state {
-                    CellState::Hidden => "X".to_string(),
+                    CellState::Hidden => HIDDEN_CELL.to_string(),
                     CellState::Shown => cell.cell_type.to_text(),
-                    CellState::Marked => "B".to_string(),
+                    CellState::Marked => FLAGGED_CELL.to_string(),
                 };
                 stdout
                     .queue(crossterm::cursor::MoveTo(y, x))?
