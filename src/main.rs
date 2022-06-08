@@ -173,6 +173,22 @@ fn reveal_around_empty(field: &mut SolvedField, sy: &u16, sx: &u16) {
             _ => {}
         }
     }
+    if *sx > 1 {
+        let cell = &mut field[*sy as usize][*sx as usize - 1];
+        match cell.cell_type {
+            CellType::Empty => cell.state = CellState::Shown,
+            CellType::Touching(_) => cell.state = CellState::Shown,
+            _ => {}
+        }
+    }
+    if *sx < WIDTH as u16 - 1 {
+        let cell = &mut field[*sy as usize][*sx as usize + 1];
+        match cell.cell_type {
+            CellType::Empty => cell.state = CellState::Shown,
+            CellType::Touching(_) => cell.state = CellState::Shown,
+            _ => {}
+        }
+    }
 }
 
 fn generate_field() -> (RawField, u32) {
